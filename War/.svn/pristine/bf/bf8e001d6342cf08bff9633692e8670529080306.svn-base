@@ -1,0 +1,114 @@
+﻿using Assets.Scripts.Soldier;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class TapInfoCtrl : MonoBehaviour {
+
+    public BuildingInfoView buildingInfoView;
+    BuildCtrl buildCtrl;
+    // Use this for initialization
+    void Start () {
+        buildingInfoView.gameObject.SetActive(false);
+
+        //事件
+        UIDispacher.Instance.AddEventListener("Upgrade", ClickBtnUpgradeBuild);
+    }
+    
+    // Update is called once per frame
+    void Update () {
+        int buildingId = LocalUser.Instance.SelectBuildId;
+        if (buildingId != -1)
+        {
+            buildingInfoView.gameObject.SetActive(true);
+            ShowBuildingInfo(buildingId);
+        }
+	}
+
+    public void OnDestroy()
+    {
+        UIDispacher.Instance.RemoveEventListener("Upgrade", ClickBtnUpgradeBuild);
+    }
+
+    /// <summary>
+    /// 显示建筑详细信息
+    /// </summary>
+    /// <param name="buildingId">建筑id</param>
+    private void ShowBuildingInfo(int buildingId)
+    {
+        Dictionary<int, BuildCtrl> BuildDic = DataMgr.Instance.BuildDic;
+        BuildDic.TryGetValue(buildingId, out buildCtrl);
+
+        
+        //名字
+        string name = buildCtrl.name;
+        //等级
+        int level = buildCtrl.Level;
+
+        Dictionary<string, SoldierInfo> dicInfo = DataMgr.Instance.dicInfo;
+        string key = name + "_" + level;
+        string keynext;
+        if (level == 3)
+        {
+            keynext = name + "_" + level.ToString();
+            //升级按钮不能点击
+            buildingInfoView.upgradeBtn.enabled = false;
+        }
+        else
+        {
+            int _level = level + 1;
+            keynext = name + "_" + _level.ToString();
+        }
+        SoldierInfo soldierInfo;
+        dicInfo.TryGetValue(key, out soldierInfo);
+        SoldierInfo soldierInfoNext;
+        dicInfo.TryGetValue(keynext, out soldierInfoNext);
+
+        buildingInfoView.name = name;
+        if (level == 1) 
+        {
+            buildingInfoView.lv1.SetActive(true);
+            buildingInfoView.lv2.SetActive(false);
+            buildingInfoView.lv3.SetActive(false);
+        }else if (level == 2)
+        {
+            buildingInfoView.lv1.SetActive(true);
+            buildingInfoView.lv2.SetActive(true);
+            buildingInfoView.lv3.SetActive(false);
+        }else if (level == 3)
+        {
+            buildingInfoView.lv1.SetActive(true);
+            buildingInfoView.lv2.SetActive(true);
+            buildingInfoView.lv3.SetActive(true);
+        }
+
+
+        if (level == 3)
+        {
+            buildingInfoView.cost.text = "0";
+            buildingInfoView.attackPower.text = soldierInfo.AttackPower.ToString() + "--->" + soldierInfoNext.AttackPower.ToString();
+            buildingInfoView.armor.text = soldierInfo.Armor.ToString() + "--->" + soldierInfoNext.Armor.ToString();
+            buildingInfoView.hp.text = soldierInfo.MAXHP.ToString() + "--->" + soldierInfoNext.MAXHP.ToString();
+            buildingInfoView.reward.text = soldierInfo.Reward.ToString() + "--->" + soldierInfoNext.Reward.ToString();
+        }
+        else
+        {
+            buildingInfoView.cost.text = soldierInfoNext.Cost.ToString();
+            buildingInfoView.attackPower.text = soldierInfo.AttackPower.ToString() + "--->" + soldierInfoNext.AttackPower.ToString();
+            buildingInfoView.armor.text = soldierInfo.Armor.ToString() + "--->" + soldierInfoNext.Armor.ToString();
+            buildingInfoView.hp.text = soldierInfo.MAXHP.ToString() + "--->" + soldierInfoNext.MAXHP.ToString();
+            buildingInfoView.reward.text = soldierInfo.Reward.ToString() + "--->" + soldierInfoNext.Reward.ToString();
+        }
+        
+    }
+
+    /// <summary>
+    /// 点击升级建筑
+    /// </summary>
+    /// <param name="param"></param>
+    private void ClickBtnUpgradeBuild(object param)
+    {
+        buildCtrl.LevelUp();
+    }
+}

@@ -1,0 +1,97 @@
+﻿syntax="proto3";
+//map key 必须是 string
+//==========================================login==========================================
+package mmopb;
+
+
+message login_req {
+    string account = 1 ; // 账号名
+    string password = 2 ; //密码
+}
+
+message login_ack {
+    bool succ = 1; //是否成功
+    string error = 2 ; //错误内容
+}
+
+message register_req{
+	string account = 1 ; // 账号名
+    string password = 2 ; //密码
+	string nickname = 3;//昵称
+}
+
+message register_ack {
+    bool succ = 1; //是否成功
+    string error = 2 ; //错误内容
+}
+//==========================================Room==========================================
+message p_roomInfo{
+    int32 roleNum = 1 ;//房间人数
+    bool isFight = 2 ; //是否开始战斗
+    int32 roomId=3; //房间Id
+}
+
+message roomList_req{
+     //请求房间信息列表  
+}
+
+message roomList_ack{
+   map<int32,p_roomInfo> roomList=1; //房间信息列表
+}
+
+
+message p_roleInfoInRoom{
+   bool isOwner=1; //是否是房主
+   string nickName=2; //玩家昵称
+   int32 camp=3; //玩家阵营
+}
+
+message creteRoom_req{
+   
+}
+
+message createRoom_ack{
+   bool isOwner=1; //是否是房主
+   string nickName=2; //玩家昵称
+   int32 camp=3; //玩家阵营
+}
+
+message enterRoom_req{
+   int32 roomId=1; //请求的房间编号
+}
+
+message enterRoom_ack{
+   bool isSuc=1; //是否成功
+   string error=2; //错误信息
+}
+message leaveRoom_req{
+    
+}
+
+message leaveRoom_ack{
+   bool isSuc=1; //是否成功
+   string error=2; //错误信息
+}
+
+message roleInfoInRoom_bcst{
+   map<int32,p_roleInfoInRoom> roleInfoInRoomList=1; //房间里角色信息
+}
+
+message startBattle_req{
+
+}
+
+message startBattle_bcst{
+   int64 ticks=1; //服务器通知游戏开始的时间
+}
+
+message sendMessage_req{
+   string content=1; 发送聊天消息的内容
+}
+
+message sendMessage_bcst{   
+   int64 ticks=1; //服务器转发消息的时间
+   string content=2; //聊天消息的内容
+   string nickName=3; //发送聊天消息的人的昵称
+}
+

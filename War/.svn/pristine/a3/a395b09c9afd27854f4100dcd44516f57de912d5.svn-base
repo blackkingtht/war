@@ -1,0 +1,35 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// 房间列表视图
+/// </summary>
+public class RoomsView : UIViewBase
+{
+    //房间界面对象
+    public GameObject rooms;
+    //房间item挂载的父对象
+    public Transform parentTransForm;
+
+    protected override void OnBtnClick(GameObject go)
+    {
+        switch (go.name)
+        {
+            case "Return":
+                UIDispacher.Instance.DispachEvent("Return", go);
+                break;
+            case "Refresh":
+                UIDispacher.Instance.DispachEvent("Refresh", go);
+                break;
+            case "CreateRoom":
+                UIDispacher.Instance.DispachEvent("CreateRoom", go);
+                break;
+        }
+    }
+
+    protected override void BeforeOnDestroy()
+    {
+        base.BeforeOnDestroy();
+    }
+}

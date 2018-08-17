@@ -1,0 +1,203 @@
+using Assets.Scripts.Soldier;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class TopInfoCtrl : MonoBehaviour {
+
+    private BuildCtrl buildCtrl;
+
+    public BuildingInfoView buildingInfoView;
+    public TimeView timeView;
+    public AudioClip upgradeBuilding;
+    public AudioClip upgradeBuildingWarning;
+    public AudioClip startSoldier;
+    private AudioSource audio;
+    private bool isFirst = true;
+    // Use this for initialization
+    void Start () {
+        audio = GetComponent<AudioSource>();
+        buildingInfoView.gameObject.SetActive(false);
+
+        //事件
+        UIDispacher.Instance.AddEventListener("Upgrade", ClickBtnUpgradeBuild);
+
+        NetDispacher.Instance.AddEventListener("sendNowSecond_bcst", SendNowSecondHandle);
+    }
+    
+    // Update is called once per frame
+    void Update () {
+        int buildingId = LocalUser.Instance.SelectBuildId;
+        if (buildingId != -1)
+        {
+            buildingInfoView.gameObject.SetActive(true);
+            ShowBuildingInfo(buildingId);
+        }
+      
+    }
+
+    public void OnDestroy()
+    {
+        UIDispacher.Instance.RemoveEventListener("Upgrade", ClickBtnUpgradeBuild);
+
+        NetDispacher.Instance.RemoveEventListener("sendNowSecond_bcst", SendNowSecondHandle);
+    }
+
+    
+
+    /// <summary>
+    /// 显示建筑详细信息
+    /// </summary>
+    /// <param name="buildingId">建筑id</param>
+    private void ShowBuildingInfo(int buildingId)
+    {
+        buildingInfoView.buildName.text = "";
+        buildingInfoView.cost.text = "";
+        buildingInfoView.attackPower.text = "";
+        buildingInfoView.armor.text = "";
+        buildingInfoView.hp.text = "";
+        buildingInfoView.reward.text = "";
+
+
+        Dictionary<int, BuildCtrl> BuildDic = PlayerCtrl.Camp == Camp.Bright ? DataMgr.Instance.BrightBuildDic : DataMgr.Instance.DarkBuildDic;
+        BuildDic.TryGetValue(buildingId, out buildCtrl);
+
+        
+        //名字
+        string name = buildCtrl.SoldierName;
+        //等级
+        int level = buildCtrl.Level;
+
+        Dictionary<string, SoldierInfo> dicInfo = DataMgr.Instance.dicInfo;
+        string key = name + "_" + level;
+        string keynext;
+        if (level == 3)
+        {
+            keynext = name + "_" + level.ToString();
+            //升级按钮不能点击
+            buildingInfoView.upgradeBtn.enabled = false;
+        }
+        else
+        {
+            int _level = level + 1;
+            keynext = name + "_" + _level.ToString();
+        }
+        SoldierInfo soldierInfo;
+        dicInfo.TryGetValue(key, out soldierInfo);
+        if(soldierInfo == null)
+        {
+            Debug.Log("第一个NULL" + key);
+        }
+        SoldierInfo soldierInfoNext;
+        dicInfo.TryGetValue(keynext, out soldierInfoNext);
+        if (soldierInfoNext == null)
+        {
+            Debug.Log("第二个NULL");
+        }
+
+        if (level == 1) 
+        {
+            buildingInfoView.lv1.SetActive(true);
+            buildingInfoView.lv2.SetActive(false);
+            buildingInfoView.lv3.SetActive(false);
+        }else if (level == 2)
+        {
+            buildingInfoView.lv1.SetActive(true);
+            buildingInfoView.lv2.SetActive(true);
+            buildingInfoView.lv3.SetActive(false);
+        }else if (level == 3)
+        {
+            buildingInfoView.lv1.SetActive(true);
+            buildingInfoView.lv2.SetActive(true);
+            buildingInfoView.lv3.SetActive(true);
+        }
+
+
+        if (level == 3)
+        {
+
+            buildingInfoView.buildName.text = soldierInfo.Name;
+            buildingInfoView.cost.text = "0";
+            buildingInfoView.attackPower.text = soldierInfo.AttackPower.ToString() + "--->" + soldierInfoNext.AttackPower.ToString();
+            buildingInfoView.armor.text = soldierInfo.Armor.ToString() + "--->" + soldierInfoNext.Armor.ToString();
+            buildingInfoView.hp.text = soldierInfo.MAXHP.ToString() + "--->" + soldierInfoNext.MAXHP.ToString();
+            buildingInfoView.reward.text = soldierInfo.Reward.ToString() + "--->" + soldierInfoNext.Reward.ToString();
+        }
+        else
+        {
+            buildingInfoView.buildName.text = soldierInfo.Name;
+            buildingInfoView.cost.text = soldierInfoNext.Cost.ToString();
+            buildingInfoView.attackPower.text = soldierInfo.AttackPower.ToString() + "--->" + soldierInfoNext.AttackPower.ToString();
+            buildingInfoView.armor.text = soldierInfo.Armor.ToString() + "--->" + soldierInfoNext.Armor.ToString();
+            buildingInfoView.hp.text = soldierInfo.MAXHP.ToString() + "--->" + soldierInfoNext.MAXHP.ToString();
+            buildingInfoView.reward.text = soldierInfo.Reward.ToString() + "--->" + soldierInfoNext.Reward.ToString();
+        }
+        
+    }
+
+    /// <summary>
+    /// 点击升级建筑
+    /// </summary>
+    /// <param name="param"></param>
+    private void ClickBtnUpgradeBuild(object param)
+    {
+        //Debug.Log(buildCtrl.BuildID + "!!!!!!!!!!!!!");
+        LocalUser.Instance.SelectBuildId = -1;
+        buildingInfoView.gameObject.SetActive(false);
+
+        Dictionary<string, SoldierInfo> dicInfo = DataMgr.Instance.dicInfo;
+        int level = 0;
+        if (buildCtrl.Level == 3)
+        {
+            level = 3;
+        }
+        else
+        {
+            level = buildCtrl.Level + 1;
+        }
+        string key = buildCtrl.SoldierName + "_" + level.ToString();
+        SoldierInfo soldierInfo;
+        dicInfo.TryGetValue(key, out soldierInfo);
+        Debug.Log("自己的：" + LocalUser.Instance.Energy + ",建造消耗：" + soldierInfo.Cost);
+        if (LocalUser.Instance.Energy >= soldierInfo.Cost)
+        {
+            buildCtrl.LevelUp();
+            audio.clip = upgradeBuilding;
+            audio.Play();
+        }
+        else
+        {
+            audio.clip = upgradeBuildingWarning;
+            audio.Play();
+        }
+        
+    }
+
+    /// <summary>
+    /// 接收服务器发送的时间消息并显示
+    /// </summary>
+    /// <param name="msg"></param>
+    private void SendNowSecondHandle(object msg)
+    {
+        
+        var timeMsg = msg as mmopb.sendNowSecond_bcst;
+        int second = timeMsg.nowSecond;
+        int time = 30 - second;
+        timeView.time.text = time.ToString();
+        timeView.time.fontSize = 185;
+        timeView.time.color = new Color32(245, 5, 5, 255);
+        StartCoroutine(ShowTime());
+        if (time == 6 && isFirst)
+        {
+            audio.clip = startSoldier;
+            audio.Play();
+        }
+    }
+    IEnumerator ShowTime()
+    {
+        yield return new WaitForSeconds(0.5f);
+        timeView.time.fontSize = 220;
+        timeView.time.color = new Color32(185, 245, 5, 255);
+    }
+}

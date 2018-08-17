@@ -1,0 +1,80 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Assets.Scripts.Soldier
+{
+     public class DataMgr
+     {
+        //单例
+        private static DataMgr instance;
+        public static DataMgr Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new DataMgr();
+                }
+                return instance;
+            }
+        }
+        public Dictionary<int, SoldierCtrl> SoldierDic;
+        public Dictionary<int, BuildCtrl> BuildDic;
+        //士兵和建筑的id号
+        public static int SoldierId = 0;
+        public static int SoldierBuildId = 0;
+        //key可以是枚举
+        public Dictionary<string, SoldierInfo> dicInfo { get; private set; }
+        //根据编号获取兵种名称
+        public Dictionary<int, string> PrefebsDic { get; private set; }
+        private DataMgr()
+        {
+            //将所有士兵的属性信息存在字典里。
+            dicInfo = new Dictionary<string, SoldierInfo>();
+            //当前地图上存在的所有士兵
+            SoldierDic = new Dictionary<int, SoldierCtrl>();
+            //当前地图上存在的所有建筑
+            BuildDic = new Dictionary<int, BuildCtrl>();
+            dicInfo.Add("人族骑兵等级1类型", AllInfo.Terren1);
+
+            //Orc_Assassin = 1,    //兽族刺客
+            //Orc_Magic = 2,       //兽族法师
+            //Orc_Scout = 3,       //兽族投石手
+            //Orc_Swordsman = 4,   //兽族剑士
+            //Orc_Infantry = 5,    //兽族步兵
+            //Terren_Worker = 6,   //人族工人
+            //Terren_Spear = 7,    //人族长枪兵
+            //Terren_Cavalry = 8,  //人族骑兵
+            //Terren_Archer = 9,   //人族弓箭手
+            //Terren_Infantry = 10 //人族步兵
+            PrefebsDic = new Dictionary<int, string>();
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Orc_Assassin), "Orc_Assassin");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Orc_Magic), "Orc_Magic");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Orc_Scout), "Orc_Scout");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Orc_Swordsman), "Orc_Swordsman");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Orc_Infantry), "Orc_Infantry");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Terren_Worker), "Terren_Worker");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Terren_Spear), "Terren_Spear");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Terren_Cavalry), "Terren_Cavalry");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Terren_Archer), "Terren_Archer");
+            PrefebsDic.Add(Convert.ToInt32(SoldierEnum.Terren_Infantry), "Terren_Infantry");
+
+        }       
+     }
+    //public int MAXHP { get; set; }          //血量上限
+    //public int AttackPower { get; set; }    //攻击力    
+    //public int Armor { get; set; }          //护甲值
+    //public float Speed { get; set; }        //速度
+    //public float AttackRange { get; set; }  //攻击范围
+    //public int Level { get; set; }          //兵种等级（根据建筑等级）
+    //public Race race { get; set; }          //种族
+    //public AttackSpecies attackSpecies { get; set; }    //攻击类型
+    //public ArmorSpecies armorSpecies { get; set; }      //护甲类型
+    public class AllInfo
+    {
+        //把各种族各兵种所有的信息全初始化
+        public static SoldierInfo Terren1 = new SoldierInfo { MAXHP = 100, AttackPower = 12, Armor = 5, Speed = 1, AttackRange = 10, attackSpecies = AttackSpecies.Normol, armorSpecies = ArmorSpecies.Heavy, race = Race.Terren};
+    }
+}

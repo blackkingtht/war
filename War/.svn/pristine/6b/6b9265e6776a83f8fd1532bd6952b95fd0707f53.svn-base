@@ -1,0 +1,49 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class PlayerInfoCtrl : MonoBehaviour {
+
+    public PlayInfoView playInfoView;
+
+    public static PlayerInfoCtrl Instance;
+ 
+    // Use this for initialization
+    private void Awake()
+    {
+        Instance = this; 
+    }
+    void Start () {
+        
+        playInfoView.myHp.text = LocalUser.Instance.MyHp.ToString();
+        playInfoView.enemyHp.text = LocalUser.Instance.EnemyHp.ToString();
+        playInfoView.energy.text = LocalUser.Instance.Energy.ToString();      
+    }
+	
+	// Update is called once per frame
+	void Update () {
+		
+	}
+
+    public void ShowInfo(bool isLocalUser,int reward)
+    {
+        if (!isLocalUser)
+        {
+            LocalUser.Instance.MyHp = LocalUser.Instance.MyHp - 1;           
+            playInfoView.myHp.text = LocalUser.Instance.MyHp.ToString();      
+        }
+        else
+        {
+            LocalUser.Instance.Energy += reward;
+            LocalUser.Instance.EnemyHp = LocalUser.Instance.EnemyHp - 1;
+            playInfoView.enemyHp.text = LocalUser.Instance.EnemyHp.ToString();
+            playInfoView.energy.text = LocalUser.Instance.Energy.ToString();
+        }
+
+    }
+    public void ShowEnergy()
+    {
+        playInfoView.energy.text = LocalUser.Instance.Energy.ToString();
+    }
+}

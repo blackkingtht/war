@@ -1,0 +1,293 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+
+namespace Assets.Scripts.Soldier
+{
+    //挂载在士兵上的脚本
+    public class SoldierCtrl :MonoBehaviour
+    {
+        private int buildId;                            //所属建筑ID
+        public  int playerId{ get; private set; }                            //所属玩家ID 
+        public int id { get; private set; }             //单位ID,用于标识当前游戏中的某个士兵
+        private State state;                            //当前状态
+        public Camp camp { get; private set; }       //所属阵营
+        public int level = 0;                          //当前等级
+        private int currentHP;                          //当前血量
+        private Animator ani;                           //动画控制器
+        private DataMgr soldierData;                    //战场上所有士兵的信息
+        private int FightId;                            //攻击时敌人的ID，没有攻击时为-1
+        private int[] BirthTime;                          //出生时的时间(秒, 毫秒)
+        public string SoldierName;                     //士兵名称
+        private int frameNum;
+        private float influenceSpeed;                     //技能影响速度的数值
+        //private AnimatorStateInfo info;                 //用于获取动画信息
+        //private int damageEnemyNum;                     //攻击敌人次数，用于对轮播动画的伤害控制
+        private AudioSource audio;
+
+
+        public void Init(int id, int BID, int PID, Camp camp, int level, string soldierName)
+        {
+            buildId = BID;
+            playerId = PID;
+            this.id = id;
+            this.camp = camp;
+            this.level = level;
+            SoldierName = soldierName;
+            currentHP = soldierData.dicInfo[SoldierName].MAXHP;
+        }
+    
+        private void Start()
+        {         
+            ani = this.GetComponent<Animator>();
+            influenceSpeed = 0;
+            audio = GetComponent<AudioSource>();
+            audio.loop = true;
+        }
+        private void Awake()
+        {
+            BirthTime = new int[2];
+            BirthTime[0] = System.DateTime.Now.Second;
+            BirthTime[1] = System.DateTime.Now.Millisecond;     //获取当前时间作为出生时间
+            state = State.Default;
+            soldierData = DataMgr.Instance;
+            frameNum = 0;
+        }
+        /// <summary>
+        /// 受伤
+        /// </summary>
+        /// <param name="id"></param>
+        public void BeInjured(int damage)
+        {
+            //50为测试伤害
+            currentHP -= damage;
+        }
+        /// <summary>
+        /// 实际伤害计算
+        /// </summary>
+        /// <param name="attackPower">攻击力</param>
+        /// <param name="attackSpecies">攻击类型</param>
+        /// <param name="armor">护甲值</param>
+        /// <param name="armorSpecies">护甲类型</param>
+        /// <returns></returns>
+        public int RealDamage(int attackPower, AttackSpecies attackSpecies, int armor, ArmorSpecies armorSpecies)
+        {
+            return Convert.ToInt32(DataMgr.Instance.DamageRatio[new AttackArmor(attackSpecies, armorSpecies)] * attackPower * (1 - armor * 0.06 / (1 + armor * 0.06)));
+        }
+        //攻击敌方，敌方收到伤害
+        public void FightEnemy()
+        {
+            if (soldierData.SoldierDic.ContainsKey(FightId))
+            {
+                soldierData.SoldierDic[FightId].BeInjured(RealDamage(soldierData.dicInfo[SoldierName].AttackPower, soldierData.dicInfo[SoldierName].attackSpecies, soldierData.dicInfo[SoldierName].Armor, soldierData.dicInfo[SoldierName].armorSpecies));
+            }     
+        }
+
+        /// <summary>
+        /// 服务器同步小兵位置
+        /// </summary>
+        /// <param name="Info"></param>
+        public void UpdatePos(mmopb.p_SoldierPosInfo Info)
+        {
+            transform.position = new Vector3(Info.x, Info.y, Info.z);
+            transform.rotation = new Quaternion(Info.xQuternion, Info.yQuternion, Info.zQuternion, Info.wQuternion);
+        }
+
+        private void Update()
+        {
+            switch (state)
+            {
+                case State.Fight:
+                    FightState();
+                    break;
+
+                case State.Run:
+                    RunState();
+                    break;
+
+                case State.Dead:
+                    Dead();
+                    break;
+
+                default:
+                    Default();
+                    break;
+            }
+        }
+        //各类状态
+        private void FightState()
+        {
+           
+            if (soldierData.SoldierDic.ContainsKey(FightId))
+            {
+               
+                Vector3 rotateVector = DataMgr.Instance.SoldierDic[FightId].transform.position - transform.position;
+                Quaternion newRotate = Quaternion.LookRotation(rotateVector);
+                this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, newRotate, 100f * Time.deltaTime);
+            }
+            ani.SetBool("FightEnemy", true);
+            if (currentHP <= 0)
+            {
+                state = State.Dead;
+                ani.SetInteger("HP", currentHP);
+            }
+            if (((soldierData.SoldierDic.ContainsKey(FightId) && soldierData.SoldierDic[FightId].currentHP <= 0)) || !soldierData.SoldierDic.ContainsKey(FightId))
+            {
+                state = State.Run;
+                ani.SetBool("FightEnemy", false);
+            }
+            
+        }
+        //行军状态
+        private void RunState()
+        {
+            Debug.Log("+++++" + DataMgr.Instance.dicInfo[SoldierName].Speed + "     " + influenceSpeed + "+++++++++");
+            transform.Translate(Vector3.forward * Time.deltaTime * (DataMgr.Instance.dicInfo[SoldierName].Speed - influenceSpeed));
+            //如果凉了切话到死亡状态
+            if (currentHP <= 0)
+            {
+                state = State.Dead;
+                ani.SetInteger("HP", currentHP);
+            }
+            //没有凉的话就探测敌人
+            else
+            {
+                var nearestEnemy = new SoldierCtrl();
+                float nearestDis = (float)Double.PositiveInfinity;
+                float tempDis;
+                foreach(var e in soldierData.SoldierDic)
+                {
+                    if(soldierData.SoldierDic.Contains(e) && e.Value.camp != this.camp)
+                    {
+                        tempDis = Vector3.Distance(e.Value.transform.position, transform.position);
+                        if (tempDis < nearestDis)
+                        {
+                            nearestEnemy = e.Value;
+                            nearestDis = tempDis;
+                        }
+                    }                  
+                }
+                //当有敌人进入探测范围时朝它前进
+                if(nearestDis <= 8)
+                {
+                    Vector3 rotateVector = nearestEnemy.transform.position - transform.position;
+                    Quaternion newRotate = Quaternion.LookRotation(rotateVector);
+                    this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, newRotate, 100f * Time.deltaTime);
+                    //敌人进入攻击距离，攻击
+                    if (nearestDis <= DataMgr.Instance.dicInfo[SoldierName].AttackRange)
+                    {
+                        state = State.Fight;
+                        FightId = nearestEnemy.id;
+                    }
+                }
+                else
+                {
+                    if(camp == Camp.Dark)
+                    {
+                        if (DataMgr.Instance.DarkBuildDic.ContainsKey(buildId))
+                        {
+                            this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, DataMgr.Instance.DarkBuildDic[buildId].StartRotate, 100f * Time.deltaTime);
+                        }
+                    }
+                    else
+                    {
+                        if (DataMgr.Instance.BrightBuildDic.ContainsKey(buildId))
+                        {
+                            this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, DataMgr.Instance.BrightBuildDic[buildId].StartRotate, 100f * Time.deltaTime);
+                        }
+                    }
+                    
+                    
+                }
+            }
+        }
+        private void Dead()
+        {
+            frameNum++;                                   //死亡动画和尸体停留150帧
+            soldierData.SoldierDic.Remove(this.id);
+            if (frameNum > 150)
+            {             
+                Destroy(gameObject);
+            }
+        }
+        //士兵出生后默认姿势一秒
+        private void Default()
+        {
+            int[] nowTime = new int[2];
+            nowTime[0] = System.DateTime.Now.Second < BirthTime[0] ? System.DateTime.Now.Second + 60 : System.DateTime.Now.Second;
+            if(System.DateTime.Now.Millisecond < BirthTime[1])
+            {
+                nowTime[1] = System.DateTime.Now.Millisecond + 1000;
+                nowTime[0] -= 1;
+            }
+            else
+            {
+                nowTime[1] = System.DateTime.Now.Millisecond;
+            }
+            if (((nowTime[0] - BirthTime[0]) * 1000 + nowTime[1] - BirthTime[1]) >= 1000)       //士兵出生后默认姿势一秒
+            {
+                state = State.Run;
+                ani.SetInteger("Run", 130);
+            }
+        }
+        //产生攻击效果(法师/投石手)
+        public void ProduceFire()
+        {
+            if ((SoldierName.Contains("Orc_Magic") || SoldierName.Contains("Orc_Scout")) && DataMgr.Instance.SoldierDic.ContainsKey(FightId))
+            {
+                Vector3 Dis = DataMgr.Instance.SoldierDic[FightId].gameObject.transform.position - transform.position;
+                Quaternion AttackRotate = Quaternion.LookRotation(Dis);         //攻击朝向
+                Dis.x *= 0.1f;
+                Dis.y *= 0.1f;
+                Dis.z *= 0.1f;
+                Vector3 Pos = transform.position;
+                Pos.y = 1;
+                GameObject newBullet = (GameObject)Resources.Load("Prefabs/Magic_Fire");
+                BulletCtrl newBulletCtrl = Instantiate(newBullet, Pos + Dis, AttackRotate).AddComponent<BulletCtrl>();
+            }
+        }
+        //产生攻击效果(弓箭手)
+        public void ProduceArrow()
+        {
+            if(DataMgr.Instance.SoldierDic.ContainsKey(FightId))
+            {
+                Vector3 Dis = DataMgr.Instance.SoldierDic[FightId].gameObject.transform.position - transform.position;
+                Quaternion AttackRotate = Quaternion.LookRotation(Dis);         //攻击朝向
+                Dis.x *= 0.2f;
+                Dis.y *= 0.2f;
+                Dis.z *= 0.2f;
+                Vector3 Pos = transform.position;
+                Pos.y = 1;
+                GameObject newBullet = (GameObject)Resources.Load("Prefabs/Magic_Fire");
+                BulletCtrl newBulletCtrl = Instantiate(newBullet, Pos + Dis, AttackRotate).AddComponent<BulletCtrl>();
+            }
+        }
+        //士兵打斗触发的战斗音效
+        public void PlayMusic()
+        {
+            audio.Play();         
+        }
+        //战斗完取消音效
+        public void PauseMusic()
+        {
+            audio.Pause();
+        }
+        //速度收到技能影响，减速
+        public void Stop()
+        {
+            influenceSpeed = 1.5f;
+        }
+        //加速
+        public void SpeedUp()
+        {
+            influenceSpeed = -2;
+        }
+        //技能持续时间结束，速度不再受影响
+        public void SpeedInfluenceCancel()
+        {
+            influenceSpeed = 0;
+        }
+    }
+}

@@ -1,0 +1,55 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Assets.Scripts.Soldier
+{
+     public class DataMgr
+     {
+        //单例
+        private static DataMgr instance;
+        public static DataMgr Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new DataMgr();
+                }
+                return instance;
+            }
+        }
+        public Dictionary<int, SoldierCtrl> SoldierDic;
+        public Dictionary<int, BuildCtrl> BuildDic;
+        //士兵和建筑的id号
+        public static int SoldierId = 0;
+        public static int SoldierBuildId = 0;
+        //key可以是枚举
+        public Dictionary<string, SoldierInfo> dicInfo { get; private set; }
+        private DataMgr()
+        {
+            //将所有士兵的属性信息存在字典里。
+            dicInfo = new Dictionary<string, SoldierInfo>();
+            //当前地图上存在的所有士兵
+            SoldierDic = new Dictionary<int, SoldierCtrl>();
+            //当前地图上存在的所有建筑
+            BuildDic = new Dictionary<int, BuildCtrl>();
+            dicInfo.Add("人族骑兵等级1类型", AllInfo.Terren1);
+        }       
+     }
+    //public int MAXHP { get; set; }          //血量上限
+    //public int AttackPower { get; set; }    //攻击力    
+    //public int Armor { get; set; }          //护甲值
+    //public float Speed { get; set; }        //速度
+    //public float AttackRange { get; set; }  //攻击范围
+    //public int Level { get; set; }          //兵种等级（根据建筑等级）
+    //public Race race { get; set; }          //种族
+    //public AttackSpecies attackSpecies { get; set; }    //攻击类型
+    //public ArmorSpecies armorSpecies { get; set; }      //护甲类型
+    public class AllInfo
+    {
+        //把各种族各兵种所有的信息全初始化
+        public static SoldierInfo Terren1 = new SoldierInfo { MAXHP = 100, AttackPower = 12, Armor = 5, Speed = 1, AttackRange = 10, attackSpecies = AttackSpecies.Normol, armorSpecies = ArmorSpecies.Heavy, race = Race.Terren};
+    }
+}

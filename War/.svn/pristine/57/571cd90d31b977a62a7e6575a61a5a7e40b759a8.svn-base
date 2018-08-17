@@ -1,0 +1,39 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GameResultCtrl : MonoBehaviour
+{
+
+    public GameResultView gameResultView;
+    // Use this for initialization
+    void Start()
+    {
+        //胜利
+        if (LocalUser.Instance.IsWin)
+        {
+            gameResultView.resultText.text = "游戏胜利";
+            gameResultView.resultText.color = new Color32(22, 114, 149, 255);
+        }
+        else
+        {
+            gameResultView.resultText.text = "游戏失败";
+            gameResultView.resultText.color = new Color32(190, 65, 52, 255);
+        }
+
+        //事件
+        UIDispacher.Instance.AddEventListener("ClickConfirm", ClickConfirm);
+    }
+
+    public void OnDestroy()
+    {
+        UIDispacher.Instance.RemoveEventListener("ClickConfirm", ClickConfirm);
+    }
+
+    //点击游戏结果界面的确认按钮
+    private void ClickConfirm(object param)
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("GameLobby");
+    }
+}

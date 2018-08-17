@@ -1,0 +1,45 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class GameLobbyCtrl : MonoBehaviour {
+
+    public GameLobbyView lobbyView;
+    void Start()
+    {
+        //事件
+        UIDispacher.Instance.AddEventListener("Click1V1", Click1V1);
+
+        //显示账号 昵称
+        GameObject account = GameObject.Find("Account");
+        Text account_text = account.GetComponent<Text>();
+        account_text.text = "账户：" + LocalUser.Instance.User_account;
+        GameObject name = GameObject.Find("Name");
+        Text name_text = name.GetComponent<Text>();
+        name_text.text = "昵称：" + LocalUser.Instance.User_nickname;
+
+        //加载金币钻石数据
+        GameObject goldcoin = GameObject.Find("GoldCoin");
+        Text goldcoin_text = goldcoin.GetComponentInChildren<Text>();
+        goldcoin_text.text = LocalUser.Instance.User_coin.ToString();
+        GameObject diamond = GameObject.Find("Diamond");
+        Text diamond_text = diamond.GetComponentInChildren<Text>();
+        diamond_text.text = LocalUser.Instance.User_diamond.ToString();
+    }
+    
+    public void OnDestroy()
+    {
+        UIDispacher.Instance.RemoveEventListener("Click1V1", Click1V1);
+    }
+
+    /// <summary>
+    /// 点击游戏大厅的1v1按钮
+    /// </summary>
+    /// <param name="param"></param>
+    private void Click1V1(object param)
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Rooms");
+    }
+}

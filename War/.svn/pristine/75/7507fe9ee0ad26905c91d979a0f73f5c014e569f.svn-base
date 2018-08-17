@@ -1,0 +1,24 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class GameResultView : UIViewBase
+{
+    public Text resultText;
+
+    protected override void OnBtnClick(GameObject go)
+    {
+        switch (go.name)
+        {
+            case "Confirm":
+                UIDispacher.Instance.DispachEvent("ClickConfirm", this.gameObject);
+                break;
+        }
+    }
+
+    protected override void BeforeOnDestroy()
+    {
+        base.BeforeOnDestroy();
+    }
+}

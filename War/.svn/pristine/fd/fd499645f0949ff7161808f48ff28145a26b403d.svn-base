@@ -1,0 +1,121 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+
+namespace Assets.Scripts.Soldier
+{
+    public  class BuildCtrl: MonoBehaviour
+    {
+        public int PlayerID { get; private set; }       //建筑属于的玩家
+        public int BuildID { get; private set; }        //建筑ID
+        //public Race Race { get; private set; }          //建筑属于的种族
+        public Camp camp { get; private set; }          //阵营
+        public int Level { get;private  set; }
+        private Animator ani;                           //动画控制器
+        private int frameNum;     
+        public  Quaternion StartRotate { get; private set; }               //旋转预制体使其朝向正确的方向
+        public string SoldierName { get; private set; }                     //士兵名称
+        public object lockObject = new object();
+
+        public void Init(int buildId, int playerID, Camp camp, Quaternion rotate, string soldierName)
+        {
+            BuildID = buildId;
+            PlayerID = playerID;
+            this.camp = camp;
+            //Race = race;
+            frameNum = 0;
+            StartRotate = rotate;
+            SoldierName = soldierName;
+            /*if (camp == Camp.Bright)
+            {
+                StartRotate = Quaternion.Inverse(new Quaternion(0, (float)0.7, 0, (float)0.7));
+            }
+            else
+            {
+                StartRotate = new Quaternion(0, (float)0.7, 0, (float)0.7);
+            }*/
+        }
+        private void Awake()
+        {
+            Level = 1;
+        }
+        void Start()
+        {           
+            ani = GetComponent<Animator>();
+        }
+
+        //void Update()
+        //{
+        //    if(frameNum == 0)
+        //    {
+        //        StartSoldier();
+        //    }
+        //    frameNum++;
+        //}
+        //接收服务器出兵消息
+
+        //出兵
+        private void StartSoldier()
+        {
+
+            string soldierName = SoldierName + "_" + this.Level.ToString();      //当前按建筑生产的士兵的名称，用于获取信息
+            Vector3 newSoldierPos = transform.position;
+            newSoldierPos.z -= (float)1;
+            //创建士兵
+            GameObject newSoldier = (GameObject)Resources.Load("Prefabs/" + SoldierName);
+            SoldierCtrl newSoldierCtrl = Instantiate(newSoldier, newSoldierPos, StartRotate).AddComponent<SoldierCtrl>();
+            Material material = Resources.Load("Materials/level" + Level) as Material;
+            Debug.Log(newSoldier.name + "****************");
+            GameObject child = newSoldierCtrl.gameObject.transform.Find(DataMgr.Instance.ObjChildObjDic[newSoldier.name]).gameObject;
+            child.GetComponent<SkinnedMeshRenderer>().material = material;
+            lock (lockObject)
+            {
+                DataMgr.Instance.SoldierDic.Add(DataMgr.SoldierId, newSoldierCtrl);
+                newSoldierCtrl.Init(DataMgr.SoldierId++, BuildID, PlayerID, camp, Level, soldierName);
+            }
+         
+        }     
+        //每三十秒同步一次出兵
+        public void StartSoldierEvery30S()
+        {
+            StartSoldier();
+        }
+
+        public void LevelUp()
+        {
+            if(Level < 3)
+            {
+                Level++;
+                //更改外观
+                Material material = Resources.Load("Materials/level" + Level) as Material;
+                GameObject child = transform.Find(DataMgr.Instance.ObjChildObjDic[gameObject.name]).gameObject;
+                child.GetComponent<SkinnedMeshRenderer>().material = material;
+
+                ////////////////////////////int costMoney = DataMgr.Instance.dicInfo[SoldierName + "_" + Level.ToString()].Cost;
+                ////////////////////////////LocalUser.Instance.Cost(costMoney);
+                //向服务器发送建筑升级消息
+                var handle=new mmopb.sendBuileLevelUp_req();
+                handle.level = Level;
+                handle.roleId = LocalUser.Instance.PlayerId;
+                handle.buildId = BuildID;
+                handle.name = SoldierName;
+                ClientNet.Instance.Send(ProtoBuf.ProtoHelper.EncodeWithName(handle));
+            }
+        }
+
+        /// <summary>
+        /// 服务器同步建筑等级
+        /// </summary>
+        public void UpdateLevel(int level)
+        {
+            if (level <= 3)
+            {
+                Level = level;
+
+            }
+                
+        }
+    }
+}

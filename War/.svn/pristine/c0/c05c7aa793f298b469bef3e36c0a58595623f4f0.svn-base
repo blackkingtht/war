@@ -1,0 +1,34 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class FriendDetail : UIViewBase
+{
+    public Image avatar;
+    public Text friendName;
+    public GameObject status_img_online;
+    public GameObject status_img_buzy;
+    public GameObject status_img_offline;
+    public Text status_text;
+    public GameObject messageNotice;
+    public int friendId;
+
+    protected override void OnBtnClick(GameObject go)
+    {
+        switch (go.name)
+        {
+            case "Delete":
+                UIDispacher.Instance.DispachEvent("ClickDeleteFriend", this.gameObject);
+                break;
+            case "SendToFriend":
+                UIDispacher.Instance.DispachEvent("ClickSendToFriend", this.gameObject);
+                break;
+        }
+    }
+
+    protected override void BeforeOnDestroy()
+    {
+        base.BeforeOnDestroy();
+    }
+}

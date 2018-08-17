@@ -1,0 +1,208 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+
+namespace Assets.Scripts.Soldier
+{
+    //挂载在士兵上的脚本
+    public class SoldierCtrl :MonoBehaviour
+    {
+        private int buildId;                            //所属建筑ID
+        public  int playerId{ get; private set; }                            //所属玩家ID 
+        public int id { get; private set; }             //单位ID,用于标识当前游戏中的某个士兵
+        private State state;                            //当前状态
+        private Camp camp;                              //所属阵营
+        private int level = 0;                          //当前等级
+        private int currentHP;                          //当前血量
+        private Animator ani;                           //动画控制器
+        private DataMgr soldierData;                    //战场上所有士兵的信息
+        private int FightId;                            //攻击时敌人的ID，没有攻击时为-1
+        private int[] BirthTime;                          //出生时的时间(秒, 毫秒)
+        //private AnimatorStateInfo info;                 //用于获取动画信息
+        //private int damageEnemyNum;                     //攻击敌人次数，用于对轮播动画的伤害控制
+        private int frameNum;
+
+
+
+        public void Init(int id, int BID, int PID, Camp camp, int level, int HP)
+        {
+            buildId = BID;
+            playerId = PID;
+            this.id = id;
+            this.camp = camp;
+            this.level = level;
+            currentHP = HP;
+        }
+    
+        private void Start()
+        {         
+            ani = this.GetComponent<Animator>();
+           
+        }
+        private void Awake()
+        {
+            BirthTime = new int[2];
+            BirthTime[0] = System.DateTime.Now.Second;
+            BirthTime[1] = System.DateTime.Now.Millisecond;     //获取当前时间作为出生时间
+            state = State.Default;
+            frameNum = 0;
+            currentHP = 100;
+            soldierData = DataMgr.Instance;
+            //测试
+            this.camp = Camp.Bright;
+            this.id = 10000;
+            //
+        }
+        /// <summary>
+        /// 受伤
+        /// </summary>
+        /// <param name="id"></param>
+        public void BeInjured()
+        {
+            //50为测试伤害
+            currentHP -= 20;
+        }
+        //攻击敌方，敌方收到伤害
+        public void FightEnemy()
+        {
+            if (soldierData.SoldierDic.ContainsKey(FightId))
+            {
+                soldierData.SoldierDic[FightId].BeInjured();
+            }     
+        }
+
+        /// <summary>
+        /// 服务器同步小兵位置
+        /// </summary>
+        /// <param name="Info"></param>
+        public void UpdatePos(mmopb.p_SoldierPosInfo Info)
+        {
+            transform.position = new Vector3(Info.x, Info.y, Info.z);
+            transform.rotation = new Quaternion(Info.xQuternion, Info.yQuternion, Info.zQuternion, Info.wQuternion);
+        }
+
+        private void Update()
+        {
+            switch (state)
+            {
+                case State.Fight:
+                    FightState();
+                    break;
+
+                case State.Run:
+                    RunState();
+                    break;
+
+                case State.Dead:
+                    Dead();
+                    break;
+
+                default:
+                    Default();
+                    break;
+            }
+        }
+        //各类状态
+        private void FightState()
+        {
+            ani.SetBool("FightEnemy", true);
+            if (currentHP < 1)
+            {
+                state = State.Dead;
+                ani.SetInteger("HP", currentHP);
+            }
+            if ((soldierData.SoldierDic.ContainsKey(FightId) && soldierData.SoldierDic[FightId].currentHP < 1) || !soldierData.SoldierDic.ContainsKey(FightId))
+            {
+                state = State.Run;
+                ani.SetBool("FightEnemy", false);
+            }
+            
+        }
+
+        private void RunState()
+        {
+            transform.Translate(Vector3.forward * Time.deltaTime * 2);
+            if(currentHP < 1)
+            {
+                state = State.Dead;
+                ani.SetInteger("HP", currentHP);
+            }
+            //没有凉的话就探测敌人
+            else
+            {
+                var nearestEnemy = new SoldierCtrl();
+                float nearestDis = 999;
+                float tempDis;
+                foreach(var e in soldierData.SoldierDic)
+                {
+                    if(soldierData.SoldierDic.Contains(e) && e.Value.camp != this.camp)
+                    {
+                        tempDis = Vector3.Distance(e.Value.transform.position, transform.position);
+                        if (tempDis < nearestDis)
+                        {
+                            nearestEnemy = e.Value;
+                            nearestDis = tempDis;
+                        }
+                    }
+                    /*if (soldierData.SoldierDic.Contains(e) && e.Value.camp != this.camp && Vector3.Distance(e.Value.transform.position, transform.position) < 2)
+                    {
+                        state = State.Fight;
+                        FightId = e.Value.id;
+                    }*/                  
+                }
+                if(nearestDis < 8)
+                {
+                    Vector3 rotateVector = nearestEnemy.transform.position - transform.position;
+                    Quaternion newRotate = Quaternion.LookRotation(rotateVector);
+                    this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, newRotate, 100f * Time.deltaTime); 
+                    if(nearestDis < 2)
+                    {
+                        state = State.Fight;
+                        FightId = nearestEnemy.id;
+                    }
+                }
+                else
+                {
+                    foreach(var e in DataMgr.Instance.BuildDic)
+                    {
+                        if(e.Value.camp == camp)
+                        {
+                            this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, e.Value.StartRotate, 100f * Time.deltaTime);
+                        }
+                    }
+                }
+            }
+        }
+        private void Dead()
+        {
+            frameNum++;                                   //死亡动画和尸体停留150帧
+            soldierData.SoldierDic.Remove(this.id);
+            if (frameNum > 150)
+            {             
+                Destroy(gameObject);
+            }
+        }
+        private void Default()
+        {
+            int[] nowTime = new int[2];
+            nowTime[0] = System.DateTime.Now.Second < BirthTime[0] ? System.DateTime.Now.Second + 60 : System.DateTime.Now.Second;
+            if(System.DateTime.Now.Millisecond < BirthTime[1])
+            {
+                nowTime[1] = System.DateTime.Now.Millisecond + 1000;
+                nowTime[0] -= 1;
+            }
+            else
+            {
+                nowTime[1] = System.DateTime.Now.Millisecond;
+            }
+            if (((nowTime[0] - BirthTime[0]) * 1000 + nowTime[1] - BirthTime[1]) >= 1000)
+            {
+                state = State.Run;
+                ani.SetInteger("Run", frameNum);
+            }
+        }
+        //收到玩家的消息。
+    }
+}

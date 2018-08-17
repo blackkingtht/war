@@ -1,0 +1,36 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Assets.Scripts.Soldier
+{
+    public class DestinationTrigger : MonoBehaviour
+    {
+
+        // Use this for initialization
+        void Start()
+        {
+
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+
+        }
+        private void OnTriggerEnter(Collider other)
+        {
+            int reward = 0;
+            SoldierCtrl soldierCtrl = other.gameObject.GetComponent<SoldierCtrl>();
+            DataMgr.Instance.SoldierDic.Remove(soldierCtrl.id);
+            Destroy(other.gameObject);
+            string key = soldierCtrl.SoldierName;
+            if (DataMgr.Instance.dicInfo.ContainsKey(key))
+            {
+                reward = DataMgr.Instance.dicInfo[key].Reward;
+            }
+            bool isLocalUser = soldierCtrl.playerId == LocalUser.Instance.PlayerId ? true : false;
+            PlayerInfoCtrl.Instance.ShowInfo(isLocalUser, reward);
+        }
+    }
+}

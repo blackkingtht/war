@@ -1,0 +1,87 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// 常量类
+/// </summary>
+public class Constant
+{
+    /// <summary>
+    /// 卡片信息
+    /// </summary>
+    //兽族刺客
+    public const string Orc_Assassin_Name = "刺客(兽族)";
+    public const string Orc_Assassin_ImgPath = "UI/Cards/1";
+    public const int Orc_Assassin_Energy = 20;
+    public const string Orc_Assassin_Info= "兽族刺客：穿刺攻击，皮甲。n优点：攻击超高。n缺点：血量护甲低，造价高昂";
+
+    //兽族法师
+    public const string Orc_Magic_Name = "法师(兽族)";
+    public const string Orc_Magic_ImgPath = "UI/Cards/2";
+    public const int Orc_Magic_Energy = 12;
+    public const string Orc_Magic_Info = "兽族法师：魔法攻击，皮甲。n优点：独特攻击类型，远程。n缺点：三围都低";
+
+    //兽族投石手
+    public const string Orc_Scout_Name = "投石手(兽族)";
+    public const string Orc_Scout_ImgPath = "UI/Cards/3";
+    public const int Orc_Scout_Energy = 8;
+    public const string Orc_Scout_Info = "兽族投石手：普通攻击，皮甲。n优点：造价低廉，远程。n缺点：三围低";
+
+    //兽族剑士
+    public const string Orc_Swordsman_Name = "剑士(兽族)";
+    public const string Orc_Swordsman_ImgPath = "UI/Cards/4";
+    public const int Orc_Swordsman_Energy = 25;
+    public const string Orc_Swordsman_Info = "兽族剑士：普通攻击，轻甲。n优点：三围高。n缺点：造价高昂";
+
+    //兽族步兵
+    public const string Orc_Infantry_Name = "步兵(兽族)";
+    public const string Orc_Infantry_ImgPath = "UI/Cards/5";
+    public const int Orc_Infantry_Energy = 12;
+    public const string Orc_Infantry_Info = "兽族步兵：普通攻击，轻甲。n优点：护甲高。n缺点：除护甲外都一般";
+
+    //人族工人
+    public const string Terren_Worker_Name = "工人(人族)";
+    public const string Terren_Worker_ImgPath = "UI/Cards/6";
+    public const int Terren_Worker_Energy = 5;
+    public const string Terren_Worker_Info = "人族工人：普通攻击，轻甲。n优点，造价低廉。n缺点：三围低";
+
+    //人族投矛手
+    public const string Terren_Spear_Name = "投矛手(人族)";
+    public const string Terren_Spear_ImgPath = "UI/Cards/7";
+    public const int Terren_Spear_Energy = 15;
+    public const string Terren_Spear_Info = "人族长枪兵：穿刺攻击，重甲。n优点：独特护甲类型，攻击力较高。n缺点：其他属性较低";
+
+    //人族骑兵
+    public const string Terren_Cavalry_Name = "骑兵(人族)";
+    public const string Terren_Cavalry_ImgPath = "UI/Cards/8";
+    public const int Terren_Cavalry_Energy = 20;
+    public const string Terren_Cavalry_Info = "人族骑兵：普通攻击，轻甲。n优点：攻击高，血量高。n缺点：造价高昂";
+
+    //人族弓箭手
+    public const string Terren_Archer_Name = "弓箭手(人族)";
+    public const string Terren_Archer_ImgPath = "UI/Cards/9";
+    public const int Terren_Archer_Energy = 10;
+    public const string Terren_Archer_Info = "人族弓箭手：穿刺攻击，轻甲。n优点：远程，造价较低。n缺点：三围低";
+
+    //人族步兵
+    public const string Terren_Infantry_Name = "步兵(人族)";
+    public const string Terren_Infantry_ImgPath = "UI/Cards/10";
+    public const int Terren_Infantry_Energy = 10;
+    public const string Terren_Infantry_Info = "人族步兵：普通攻击，重甲。n优点：独特护甲类型，护甲高。n缺点：攻击力低";
+
+
+    /// <summary>
+    /// 技能
+    /// </summary>
+    //技能1
+    public const string skill_1_Name = "冲锋";
+    public const string skill_1_ImgPath = "UI/Skills/skill1";
+    public const string skill_1_Info = "我方全体士兵速度+2";
+
+    //技能2
+    public const string skill_2_Name = "警戒";
+    public const string skill_2_ImgPath = "UI/Skills/skill2";
+    public const string skill_2_Info = "我方全体士兵停止前进";
+
+}

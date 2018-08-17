@@ -1,0 +1,72 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+
+namespace Assets.Scripts.Soldier
+{
+    public  class BuildCtrl: MonoBehaviour
+    {
+        public int PlayerID { get; private set; }       //建筑属于的玩家
+        public int BuildID { get; private set; }        //建筑ID
+        //public Race Race { get; private set; }          //建筑属于的种族
+        public Camp camp { get; private set; }          //阵营
+        public int Level { get; private set; }
+        private Animator ani;                           //动画控制器
+        private int frameNum;     
+        public  Quaternion StartRotate { get; private set; }               //旋转预制体使其朝向正确的方向
+
+
+        public void Init(int buildId, int playerID, Camp camp, Quaternion rotate)
+        {
+            BuildID = buildId;
+            PlayerID = playerID;
+            this.camp = camp;
+            //Race = race;
+            Level = 1;
+            frameNum = 0;
+            StartRotate = rotate;
+            /*if (camp == Camp.Bright)
+            {
+                StartRotate = Quaternion.Inverse(new Quaternion(0, (float)0.7, 0, (float)0.7));
+            }
+            else
+            {
+                StartRotate = new Quaternion(0, (float)0.7, 0, (float)0.7);
+            }*/
+        }
+        void Start()
+        {
+            ani = GetComponent<Animator>();
+        }
+
+        //void Update()
+        //{
+        //    if(frameNum == 0)
+        //    {
+        //        StartSoldier();
+        //    }
+        //    frameNum++;
+        //}
+        //接收服务器出兵消息
+
+        //出兵
+        private void StartSoldier()
+        {
+
+            Vector3 newSoldierPos = transform.position;
+            newSoldierPos.z -= (float)1;
+            //创建士兵
+            GameObject newSoldier = (GameObject)Resources.Load("Prefabs/cavalry");
+            SoldierCtrl newSoldierCtrl = Instantiate(newSoldier, newSoldierPos, StartRotate).AddComponent<SoldierCtrl>();
+            DataMgr.Instance.SoldierDic.Add(DataMgr.SoldierId, newSoldierCtrl);
+            newSoldierCtrl.Init(DataMgr.SoldierId++, BuildID, PlayerID, camp, Level, DataMgr.Instance.dicInfo["人族骑兵等级1类型"].MAXHP);
+        }     
+        //每三十秒同步一次出兵
+        public void StartSoldierEvery30S()
+        {
+            StartSoldier();
+        }
+    }
+}

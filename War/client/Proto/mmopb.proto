@@ -1,0 +1,286 @@
+﻿syntax="proto3";
+//map key 必须是 string
+//==========================================login==========================================
+package mmopb;
+
+
+message login_req {
+    string account = 1 ; // 账号名
+    string password = 2 ; //密码
+}
+
+message login_ack {
+    bool succ = 1; //是否成功
+    string error = 2 ; //错误内容
+    int32 roleId=3; //角色id
+    string nickName=4; //昵称
+    int32 goldCoin=5; //金币
+    int32 diamond=6; //钻石
+}
+
+message register_req{
+    string account = 1 ; // 账号名
+    string password = 2 ; //密码
+    string nickname = 3;//昵称
+}
+
+message register_ack {
+    bool succ = 1; //是否成功
+    string error = 2 ; //错误内容
+}
+//==========================================Room==========================================
+message p_roomInfo{
+    int32 roleNum = 1 ;//房间人数
+    bool isFight = 2 ; //是否开始战斗
+    int32 roomId=3; //房间Id
+    string nickName=4; //房主名称
+}
+
+message roomList_req{
+     //请求房间信息列表  
+}
+
+message roomList_ack{
+   map<int32,p_roomInfo> roomList=1; //房间信息列表
+}
+
+
+message p_roleInfoInRoom{
+   bool isOwner=1; //是否是房主
+   string nickName=2; //玩家昵称
+   int32 camp=3; //玩家阵营
+}
+
+message creteRoom_req{
+   
+}
+
+message createRoom_ack{
+   bool isOwner=1; //是否是房主
+   string nickName=2; //玩家昵称
+   int32 camp=3; //玩家阵营
+}
+
+message enterRoom_req{
+   int32 roomId=1; //请求的房间编号
+}
+
+message enterRoom_ack{
+   bool isSuc=1; //是否成功
+   string error=2; //错误信息
+}
+message leaveRoom_req{
+    
+}
+
+message leaveRoom_ack{
+   bool isSuc=1; //是否成功
+   string error=2; //错误信息
+}
+
+message roleInfoInRoom_bcst{
+   map<int32,p_roleInfoInRoom> roleInfoInRoomList=1; //房间里角色信息
+}
+
+message startBattle_req{
+
+}
+
+message startBattle_bcst{
+   int64 ticks=1; //服务器通知游戏开始的时间
+   int32 startEnergy=2; //初始能量
+   int32 startHp=3; //初始血量
+}
+
+message sendMessage_req{
+   string content=1; 发送聊天消息的内容
+}
+
+message sendMessage_bcst{   
+   int64 ticks=1; //服务器转发消息的时间
+   string content=2; //聊天消息的内容
+   string nickName=3; //发送聊天消息的人的昵称
+}
+
+message sendBuildPosition_req{
+   float x=1; //建筑的x坐标
+   float y=2; //建筑的y坐标
+   float z=3; //建筑的坐标
+   float xQuternion=4; //建筑旋转角四元数的x值
+   float yQuternion=5; //建筑旋转角四元数的y值
+   float zQuternion=6; //建筑旋转角四元数的z值
+   float wQuternion=7; //  建筑旋转角四元数的w值
+   int32 roleId=8; //建筑所属的roleId 
+   int32 buildType=9; //建筑的类型
+}
+
+message sendBuildPosition_bcst{
+   float x=1; //建筑的x坐标
+   float y=2; //建筑的y坐标
+   float z=3; //建筑的坐标
+   float xQuternion=4; //建筑旋转角四元数的x值
+   float yQuternion=5; //建筑旋转角四元数的y值
+   float zQuternion=6; //建筑旋转角四元数的z值
+   float wQuternion=7; //  建筑旋转角四元数的w值
+   int32 roleId=8; //建筑所属的roleId 
+   int32 buildType=9; //建筑的类型
+}
+
+message sendBuileLevelUp_req{
+   int32 roleId=1; //建筑所属的roleId
+   int32 buildId=2; //当前建筑的id
+   int32 level=3; //当前建筑的等级
+   string name=4;   //当前建筑的名称
+}
+
+message sendBuileLevelUp_bcst{
+   int32 roleId=1; //建筑所属的roleId
+   int32 buildId=2; //当前建筑的id
+   int32 level=3; //当前建筑的等级
+}
+
+message sendStartSoldier_bcst{
+   int32 energy=1; //每隔30s后的能量（增加后）。   
+}
+
+message sendNowSecond_bcst{
+   int32 nowSecond=1; //当前进行的秒数（30s内递增）
+}
+
+message p_SoldierPosInfo{
+   float x=1; //士兵的x坐标
+   float y=2; //士兵的y坐标
+   float z=3; //士兵的z坐标
+   float xQuternion=4; //士兵旋转角四元数的x值
+   float yQuternion=5; //士兵旋转角四元数的y值
+   float zQuternion=6; //士兵旋转角四元数的z值
+   float wQuternion=7; //士兵旋转角四元数的w值
+}
+
+message sendSoldierPos_req{
+   map<int32,p_SoldierPosInfo> soldierPosInfoList=1; //士兵的位置信息字典
+}
+
+message sendSoldierPos_bcst{
+   map<int32,p_SoldierPosInfo> soldierPosInfoList=1; //士兵的位置信息字典
+   int32 roleId=2; //发送消息的玩家id 
+}
+
+message friendsList_req{
+
+}
+
+message friendsList_ack{
+   map<int32,p_FriendsInfo> friendList=1; //好友列表   
+}
+
+message p_FriendsInfo{
+    string nickName=1; //好友的昵称
+    int32 isOnline=2; //好友当前的状态。1代表离线，2代表在大厅，3代表在房间，4代表在游戏中
+}
+
+message addFriend_req{
+    string nickName=1; //好友昵称
+}
+message addFriend_ack{
+    bool isSuc=1; //是否成功
+    string error=2; //错误原因	     
+}
+
+message playerAddFriend_ecn{
+    string reqPlayerNickName=1; //请求添加好友玩家的昵称
+    int32 roleId=2; //请求添加好友玩家的id   
+}
+
+message noticePlayerAddFriend_ack{
+   bool isAgree=1; //是否同意添加好友
+   int32 roleId=2; //请求添加好友玩家的id
+}
+
+message sendMessageToOnlineFriend_req{
+   string content=1; //发送聊天消息的内容
+   int32 roleId=2; //好友的id
+}
+
+message sendMessageToOnlineFriend_ecn{
+   string content=1; //发送聊天消息的内容
+   string nickName=2; //发送聊天消息的玩家昵称
+   int32 roleId=3; //发送聊天消息的玩家id 
+   int64 ticks=4; //转发消息的时间
+}
+
+message deleteFriend_req{
+   int32 roleId=1; //要删除好友的id   
+}
+
+message deleteFriend_ack{
+   bool isSuc=1; //是否删除成功
+   string error=2; //错误内容
+}
+
+message inviteFriend_req{
+   int32 roleId=1; //被邀请好友的id
+}
+
+message noticeInviteFriend_ecn{
+   string nickName=1; //发送邀请玩家的昵称
+   int32 roleId=2; //发送邀请玩家的id
+}
+
+message noticeInviteFriend_ack{
+   bool isSuc=1; //是否同意
+   int32 roleId=2; //发送邀请玩家的id
+} 
+
+message inviteResult_ack{
+   bool isSuc=1; //是否成功
+   string error=2; //错误信息
+}
+
+message soldierBreak_req{
+   string keyName=1; //士兵字典信息里的key值
+}
+
+message soldierBreak_bcst{
+   map<int32,p_roleInfoInTheGame> infoList=1; //游戏中玩家血量，能量列表
+}
+
+message p_roleInfoInTheGame{
+   int32 hp=1; //当前血量
+   int32 energy=2; //当前能量
+}
+
+message gameOver_bcst{
+   map<int32,p_gameResultInfo> gameResultInfoList=1; //游戏结束，数据统计列表
+}
+
+message p_gameResultInfo{
+   bool isWinner=1; //是否获胜
+   int32 createSoldierNum=2; //生产兵的数量
+   int32 createBuildingNum=3; //生产建筑的数量
+   int32 energyRewardNum=4; //获得的能量数量
+   int32 goldCoin=5; //获得的金币数量 
+}
+
+message useSkill_req{
+   int32 skillType=1; //技能的类型
+   
+}
+
+message useSkillError_ack{
+   string error=1; //错误原因
+}
+
+message useSkill_bcst{
+   int32 skiilType=1; //技能的类型
+   int32 roleId=2; //使用技能的玩家
+}
+
+message exitGame_req{
+   //退出游戏请求
+}
+
+message exitGame_ack{
+   bool isSuc=1; //是否成功
+   string error=2; //错误原因
+}
